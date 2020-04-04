@@ -201,6 +201,7 @@ contract test {
     string a = hex"00FF0000";
     string b = hex'00AA0000';
     string b = hex'00AA_0000';
+    string b = hex"";
 }
 contract test {
     function fun(uint256 a) {
@@ -649,4 +650,97 @@ contract FeedConsumer {
 contract test {
   receive () external payable {}
   fallback () external payable {}
+}
+
+pragma solidity >=0.5.0 <0.7.0;
+
+contract D {
+    uint public x;
+    constructor(uint a) public payable {
+        x = a;
+    }
+}
+
+contract C {
+    D d = new D(4); // will be executed as part of C's constructor
+
+    function createD(uint arg) public {
+        D newD = new D(arg);
+        newD.x();
+    }
+
+    function createAndEndowD(uint arg, uint amount) public payable {
+        // Send ether along with the creation
+        D newD = new D{value: amount}(arg);
+        newD.x();
+    }
+}
+
+pragma solidity >0.6.1 <0.7.0;
+
+contract D {
+    uint public x;
+    constructor(uint a) public {
+        x = a;
+    }
+}
+
+contract C {
+    function createDSalted(bytes32 salt, uint arg) public {
+        /// This complicated expression just tells you how the address
+        /// can be pre-computed. It is just there for illustration.
+        /// You actually only need ``new D{salt: salt}(arg)``.
+        address predictedAddress = address(bytes20(keccak256(abi.encodePacked(
+            byte(0xff),
+            address(this),
+            salt,
+            keccak256(abi.encodePacked(
+                type(D).creationCode,
+                arg
+            ))
+        ))));
+
+        D d = new D{salt: salt}(arg);
+        require(address(d) == predictedAddress);
+    }
+}
+
+contract c {
+    string a = "aaa"
+    "bbb";
+    string b = "aaa""bbb";
+    string c = "aaa"  "bbb";
+}
+
+pragma solidity >=0.4.22 <0.7.0;
+
+contract owned {
+    constructor() public { owner = msg.sender; }
+    address payable owner;
+}
+
+contract Destructible is owned {
+    function destroy() virtual public {
+        if (msg.sender == owner) selfdestruct(owner);
+    }
+}
+
+contract Base1 is Destructible {
+    function destroy() public virtual override { /* do cleanup 1 */ super.destroy(); }
+}
+
+
+contract Base2 is Destructible {
+    function destroy() public virtual override { /* do cleanup 2 */ super.destroy(); }
+}
+
+contract Final is Base1, Base2 {
+    function destroy() public override(Base1, Base2) { super.destroy(); }
+}
+
+contract PayableAddress {
+    function payableFn() public pure {
+        address x;
+        address y = payable(x);
+    }
 }

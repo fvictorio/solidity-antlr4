@@ -29,9 +29,9 @@ importDeclaration
   : identifier ('as' identifier)? ;
 
 importDirective
-  : 'import' StringLiteral ('as' identifier)? ';'
-  | 'import' ('*' | identifier) ('as' identifier)? 'from' StringLiteral ';'
-  | 'import' '{' importDeclaration ( ',' importDeclaration )* '}' 'from' StringLiteral ';' ;
+  : 'import' StringLiteralFragment ('as' identifier)? ';'
+  | 'import' ('*' | identifier) ('as' identifier)? 'from' StringLiteralFragment ';'
+  | 'import' '{' importDeclaration ( ',' importDeclaration )* '}' 'from' StringLiteralFragment ';' ;
 
 contractDefinition
   : 'abstract'? ( 'contract' | 'interface' | 'library' ) identifier
@@ -181,7 +181,7 @@ forStatement
   : 'for' '(' ( simpleStatement | ';' ) ( expressionStatement | ';' ) expression? ')' statement ;
 
 inlineAssemblyStatement
-  : 'assembly' StringLiteral? assemblyBlock ;
+  : 'assembly' StringLiteralFragment? assemblyBlock ;
 
 doWhileStatement
   : 'do' statement 'while' '(' expression ')' ';' ;
@@ -234,6 +234,7 @@ expression
   | expression '[' expression? ']'
   | expression '[' expression? ':' expression? ']'
   | expression '.' identifier
+  | expression '{' nameValueList '}'
   | expression '(' functionCallArguments ')'
   | '(' expression ')'
   | ('++' | '--') expression
@@ -260,9 +261,10 @@ primaryExpression
   : BooleanLiteral
   | numberLiteral
   | HexLiteral
-  | StringLiteral
+  | stringLiteral
   | identifier ('[' ']')?
   | TypeKeyword
+  | PayableKeyword
   | tupleExpression
   | typeNameExpression ('[' ']')? ;
 
@@ -302,7 +304,7 @@ assemblyItem
   | LeaveKeyword
   | subAssembly
   | numberLiteral
-  | StringLiteral
+  | stringLiteral
   | HexLiteral ;
 
 assemblyExpression
@@ -351,7 +353,7 @@ assemblyIf
   : 'if' assemblyExpression assemblyBlock ;
 
 assemblyLiteral
-  : StringLiteral | DecimalNumber | HexNumber | HexLiteral ;
+  : stringLiteral | DecimalNumber | HexNumber | HexLiteral ;
 
 subAssembly
   : 'assembly' identifier assemblyBlock ;
@@ -391,7 +393,7 @@ NumberUnit
   : 'wei' | 'szabo' | 'finney' | 'ether'
   | 'seconds' | 'minutes' | 'hours' | 'days' | 'weeks' | 'years' ;
 
-HexLiteral : 'hex' ('"' HexDigits '"' | '\'' HexDigits '\'') ;
+HexLiteral : 'hex' ('"' HexDigits? '"' | '\'' HexDigits? '\'') ;
 
 fragment
 HexPair
@@ -453,7 +455,10 @@ fragment
 IdentifierPart
   : [a-zA-Z0-9$_] ;
 
-StringLiteral
+stringLiteral
+  : StringLiteralFragment+ ;
+
+StringLiteralFragment
   : '"' DoubleQuotedStringCharacter* '"'
   | '\'' SingleQuotedStringCharacter* '\'' ;
 
